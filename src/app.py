@@ -186,76 +186,29 @@ prompt_template = ChatPromptTemplate.from_messages([
 ])
 chain = prompt_template | llm
 
-# ─── INTENT ROUTING: UPGRADED KEYWORD SYNONYM SUPPORT ─────────────────────────
+# ─── INTENT ROUTING: JSON-BASED CONFIGURATION ─────────────────────────────
 
-INTENT_ALIAS_MAP = {
-    "browse_diamonds": [
-        "browse diamonds", "view diamonds", "see diamonds", "shop diamonds", "diamonds online"
-    ],
-    "book_appointment": [
-        "schedule", "book appointment", "set up visit", "make an appointment", "come in"
-    ],
-    "custom_design": [
-        "custom ring", "custom design", "create a ring", "design my own", "custom engagement"
-    ],
-    "watch_repair": [
-        "watch battery", "fix watch", "replace battery", "watch stopped", "repair my watch"
-    ],
-    "pearl_restring": [
-        "pearl necklace", "pearl restring", "fix pearls", "restring beads"
-    ],
-    "appraisal": [
-        "appraisal", "insurance value", "get my ring appraised", "jewelry evaluation"
-    ],
-    "diamond_education": [
-        "diamond guide", "diamond cut", "4 cs", "learn about diamonds"
-    ],
-    "promo": [
-        "promotion", "giveaway", "$1000 off", "instagram promo", "current offer"
-    ],
-    "review": [
-        "review", "feedback", "rate my visit", "leave a review"
-    ],
-    "support": [
-        "help", "support", "contact", "customer service"
-    ]
-}
-
-INTENT_URL_MAP = {
-    "browse_diamonds": "https://www.thediamondfamily.com/diamonds/",
-    "book_appointment": "https://www.thediamondfamily.com/appointments/",
-    "custom_design": "https://www.thediamondfamily.com/services/custom-design/",
-    "watch_repair": "https://www.thediamondfamily.com/services/watch-repair/",
-    "pearl_restring": "https://www.thediamondfamily.com/services/pearl-bead-restringing/",
-    "appraisal": "https://www.thediamondfamily.com/services/appraisals/",
-    "diamond_education": "https://www.thediamondfamily.com/education/diamond-guide/",
-    "promo": "https://www.thediamondfamily.com/enter-win-1000-your-purchase/",
-    "review": "https://g.co/kgs/wgFjUyU",
-    "support": "https://www.thediamondfamily.com/"
-}
+intents_file = os.path.join(ROOT, "prompts", "intents.json")
+try:
+    with open(intents_file, "r", encoding="utf-8") as f:
+        INTENTS = json.load(f)
+except FileNotFoundError:
+    logger.warning(f"Intents file not found at {intents_file}")
+    INTENTS = {}
 
 
 def inject_relevant_url(user_input: str, response: str) -> str:
     """
-    Inject a single, most relevant URL based on INTENT_ALIAS_MAP match.
-    Ensures only ONE link is ever appended per message to avoid spammy UX.
-
-    Match strategy:
-    - Scan each intent group in priority order.
-    - Inject the first matching URL found.
-    - Ignore additional matches in other groups.
+    Match user intent using keyword synonyms → inject single relevant URL.
+    Strict 1:1 mapping with no fallbacks or multi-URL injection.
     """
-    lower_input = user_input.lower()
-
-    for intent, phrases in INTENT_ALIAS_MAP.items():
-        if any(phrase in lower_input for phrase in phrases):
-            url = INTENT_URL_MAP[intent]
-            response += f"\n\n🔗 You can explore that here: {url}"
-            break  # Stop after first match
-    else:
-        if "website" in lower_input:
-            response += "\n\n🔗 Full site: https://www.thediamondfamily.com/"
-
+    user_input_lower = user_input.lower()
+    for intent_key, intent_data in INTENTS.items():
+        for synonym in intent_data["synonyms"]:
+            if synonym in user_input_lower:
+                return response + f"\n\n🔗 You can explore that here: {intent_data['url']}"
+    
+    # No match? No leak.
     return response
 
 # ─── REQUEST MODEL ────────────────────────────────────────────────────────────

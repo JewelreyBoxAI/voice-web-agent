@@ -1,0 +1,42 @@
+{
+  "browse diamonds": {
+    "synonyms": ["see diamonds", "browse diamonds", "diamond list", "diamond selection", "show me diamonds", "view diamonds", "shop diamonds", "diamonds online"],
+    "url": "https://www.thediamondfamily.com/diamonds/"
+  },
+  "custom ring": {
+    "synonyms": ["custom ring", "custom engagement", "make my own ring", "custom jewelry", "custom design", "create a ring", "design my own"],
+    "url": "https://www.thediamondfamily.com/services/custom-design/"
+  },
+  "designers": {
+    "synonyms": ["designer brands", "designers", "brands you carry", "jewelry designers"],
+    "url": "https://www.thediamondfamily.com/designers/"
+  },
+  "watch repair": {
+    "synonyms": ["watch battery", "watch repair", "fix watch", "replace battery", "watch stopped", "repair my watch"],
+    "url": "https://www.thediamondfamily.com/services/watch-repair/"
+  },
+  "appraisal": {
+    "synonyms": ["jewelry appraisal", "appraisal", "value my jewelry", "insurance value", "get my ring appraised", "jewelry evaluation"],
+    "url": "https://www.thediamondfamily.com/services/appraisals/"
+  },
+  "appointment": {
+    "synonyms": ["schedule", "book appointment", "set up visit", "make an appointment", "come in"],
+    "url": "https://www.thediamondfamily.com/appointments/"
+  },
+  "pearl restring": {
+    "synonyms": ["pearl necklace", "pearl restring", "fix pearls", "restring beads"],
+    "url": "https://www.thediamondfamily.com/services/pearl-bead-restringing/"
+  },
+  "diamond education": {
+    "synonyms": ["diamond guide", "diamond cut", "4 cs", "learn about diamonds"],
+    "url": "https://www.thediamondfamily.com/education/diamond-guide/"
+  },
+  "promotion": {
+    "synonyms": ["promotion", "giveaway", "$1000 off", "instagram promo", "current offer"],
+    "url": "https://www.thediamondfamily.com/enter-win-1000-your-purchase/"
+  },
+  "review": {
+    "synonyms": ["review", "feedback", "rate my visit", "leave a review"],
+    "url": "https://g.co/kgs/wgFjUyU"
+  }
+} 
