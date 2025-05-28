@@ -1,4 +1,3 @@
-
 import json
 import logging
 import os
@@ -25,7 +24,7 @@ from langchain.prompts import (
 # ─── ENV + LOGGING ───────────────────────────────────────────────────────────
 
 load_dotenv()
-logger = logging.getLogger("jewelrybox_ai")
+logger = logging.getLogger("gym_bot")
 logger.setLevel(logging.INFO)
 
 # ─── PATHS & TEMPLATES ────────────────────────────────────────────────────────
@@ -46,17 +45,17 @@ except FileNotFoundError:
 
 # ─── ENCODE AVATAR IMAGE ──────────────────────────────────────────────────────
 
-img_path = os.path.join(ROOT, "images", "diamond_avatar.png")
+img_path = os.path.join(ROOT, "images", "female_avatar.png")
 if os.path.exists(img_path):
     with open(img_path, "rb") as img:
         IMG_URI = "data:image/png;base64," + base64.b64encode(img.read()).decode()
 else:
     logger.warning(f"Image not found at {img_path}, using fallback.")
-    IMG_URI = "https://via.placeholder.com/60x60/0066cc/ffffff?text=💎"
+    IMG_URI = "https://via.placeholder.com/60x60.png?text=Bot"
 
 # ─── FASTAPI SETUP ───────────────────────────────────────────────────────────
 
-app = FastAPI(title="JewelryBox.AI Assistant")
+app = FastAPI(title="JewelryBox.AI Assistant (Text Only)")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.getenv("ALLOWED_ORIGINS", "").split(","),
@@ -68,9 +67,19 @@ app.add_middleware(
 
 memory = InMemoryChatMessageHistory(return_messages=True)
 llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=1024, temperature=0.9)
-prompt_text = json.dumps(AGENT_ROLES["jewelry_ai"], indent=2)
+# Extract system prompt from JSON structure
+system_prompt_data = AGENT_ROLES["jewelry_ai"][0]["systemPrompt"]
+prompt_parts = []
+prompt_parts.append(f"You are {system_prompt_data['identity']}, a {system_prompt_data['role']}.")
+prompt_parts.append(f"Tone: {system_prompt_data['tone']}")
+prompt_parts.extend(system_prompt_data['description'])
+
+# Add natural conversation guidance
+prompt_parts.append("IMPORTANT: Communicate naturally and conversationally. Never use robotic AI language, formal disclaimers, or phrases like 'As an AI assistant' or 'I'm here to help.' Speak as a knowledgeable jewelry expert would - confident, personable, and genuinely enthusiastic about jewelry. Use contractions, casual transitions, and speak as if you're having a real conversation with a valued client.")
+
+prompt_text = " ".join(prompt_parts)
 prompt_template = ChatPromptTemplate.from_messages([
-    SystemMessage(content=f"You are JewelryBox AI, a luxury jewelry consultant. Use this knowledge: {prompt_text}"),
+    SystemMessage(content=prompt_text),
     MessagesPlaceholder(variable_name="history"),
     HumanMessagePromptTemplate.from_template("{user_input}")
 ])
@@ -148,7 +157,7 @@ async def widget(request: Request):
 # ─── CLI SANITY TEST ───────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("JewelryBox.AI Assistant CLI Test (type 'exit')")
+    print("Gym Bot CLI Test (type 'exit')")
     history = []
     while True:
         try:
@@ -156,7 +165,7 @@ if __name__ == "__main__":
             if text.lower() in ("exit", "quit"): sys.exit(0)
             res = chain.invoke({"user_input": text, "history": history})
             reply = res.content.strip()
-            print("JewelryBox.AI:", reply)
+            print("Bot:", reply)
             memory.add_user_message(text)
             memory.add_ai_message(reply)
             history = memory.messages
