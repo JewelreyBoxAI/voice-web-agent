@@ -237,20 +237,25 @@ INTENT_URL_MAP = {
 
 def inject_relevant_url(user_input: str, response: str) -> str:
     """
-    Injects a relevant URL into the LLM response based on known synonym triggers.
-    Only applies if a known phrase from INTENT_ALIAS_MAP is detected in user_input.
+    Inject a single, most relevant URL based on INTENT_ALIAS_MAP match.
+    Ensures only ONE link is ever appended per message to avoid spammy UX.
+
+    Match strategy:
+    - Scan each intent group in priority order.
+    - Inject the first matching URL found.
+    - Ignore additional matches in other groups.
     """
     lower_input = user_input.lower()
 
     for intent, phrases in INTENT_ALIAS_MAP.items():
-        for phrase in phrases:
-            if phrase in lower_input:
-                url = INTENT_URL_MAP[intent]
-                response += f"\n\n🔗 You can explore that here: {url}"
-                return response
+        if any(phrase in lower_input for phrase in phrases):
+            url = INTENT_URL_MAP[intent]
+            response += f"\n\n🔗 You can explore that here: {url}"
+            break  # Stop after first match
+    else:
+        if "website" in lower_input:
+            response += "\n\n🔗 Full site: https://www.thediamondfamily.com/"
 
-    if "website" in lower_input:
-        response += "\n\n🔗 Full site: https://www.thediamondfamily.com/"
     return response
 
 # ─── REQUEST MODEL ────────────────────────────────────────────────────────────
