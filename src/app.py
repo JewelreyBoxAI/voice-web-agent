@@ -186,39 +186,70 @@ prompt_template = ChatPromptTemplate.from_messages([
 ])
 chain = prompt_template | llm
 
-# ─── KEYWORD-TO-URL MAPPING ─────────────────────────────────────────────────────
-URL_MAP = {
-    "appointment": "https://www.thediamondfamily.com/appointments/",
-    "custom ring": "https://www.thediamondfamily.com/services/custom-design/",
-    "custom engagement": "https://www.thediamondfamily.com/services/custom-design/",
-    "designers": "https://www.thediamondfamily.com/designers/",
-    "watch repair": "https://www.thediamondfamily.com/services/watch-repair/",
-    "watch battery": "https://www.thediamondfamily.com/services/watch-repair/",
-    "pearl restring": "https://www.thediamondfamily.com/services/pearl-bead-restringing/",
-    "diamond cut": "https://www.thediamondfamily.com/education/diamond-guide/",
-    "diamond guide": "https://www.thediamondfamily.com/education/diamond-guide/",
-    "browse diamonds": "https://www.thediamondfamily.com/diamonds/",
-    "appraisal": "https://www.thediamondfamily.com/services/appraisals/",
-    "promo": "https://www.thediamondfamily.com/enter-win-1000-your-purchase/",
-    "giveaway": "https://www.thediamondfamily.com/enter-win-1000-your-purchase/",
-    "support": "https://www.thediamondfamily.com/",
-    "review": "https://g.co/kgs/wgFjUyU",
+# ─── INTENT ROUTING: UPGRADED KEYWORD SYNONYM SUPPORT ─────────────────────────
+
+INTENT_ALIAS_MAP = {
+    "browse_diamonds": [
+        "browse diamonds", "view diamonds", "see diamonds", "shop diamonds", "diamonds online"
+    ],
+    "book_appointment": [
+        "schedule", "book appointment", "set up visit", "make an appointment", "come in"
+    ],
+    "custom_design": [
+        "custom ring", "custom design", "create a ring", "design my own", "custom engagement"
+    ],
+    "watch_repair": [
+        "watch battery", "fix watch", "replace battery", "watch stopped", "repair my watch"
+    ],
+    "pearl_restring": [
+        "pearl necklace", "pearl restring", "fix pearls", "restring beads"
+    ],
+    "appraisal": [
+        "appraisal", "insurance value", "get my ring appraised", "jewelry evaluation"
+    ],
+    "diamond_education": [
+        "diamond guide", "diamond cut", "4 cs", "learn about diamonds"
+    ],
+    "promo": [
+        "promotion", "giveaway", "$1000 off", "instagram promo", "current offer"
+    ],
+    "review": [
+        "review", "feedback", "rate my visit", "leave a review"
+    ],
+    "support": [
+        "help", "support", "contact", "customer service"
+    ]
 }
+
+INTENT_URL_MAP = {
+    "browse_diamonds": "https://www.thediamondfamily.com/diamonds/",
+    "book_appointment": "https://www.thediamondfamily.com/appointments/",
+    "custom_design": "https://www.thediamondfamily.com/services/custom-design/",
+    "watch_repair": "https://www.thediamondfamily.com/services/watch-repair/",
+    "pearl_restring": "https://www.thediamondfamily.com/services/pearl-bead-restringing/",
+    "appraisal": "https://www.thediamondfamily.com/services/appraisals/",
+    "diamond_education": "https://www.thediamondfamily.com/education/diamond-guide/",
+    "promo": "https://www.thediamondfamily.com/enter-win-1000-your-purchase/",
+    "review": "https://g.co/kgs/wgFjUyU",
+    "support": "https://www.thediamondfamily.com/"
+}
+
 
 def inject_relevant_url(user_input: str, response: str) -> str:
     """
-    Smart URL injection based on semantic keyword triggers in user_input.
-    Prevents hallucinations and ensures traffic redirection to validated KB pages.
+    Injects a relevant URL into the LLM response based on known synonym triggers.
+    Only applies if a known phrase from INTENT_ALIAS_MAP is detected in user_input.
     """
     lower_input = user_input.lower()
-    injected = False
-    for keyword, url in URL_MAP.items():
-        if keyword in lower_input:
-            response += f"\n\n🔗 You can explore that here: {url}"
-            injected = True
-            break
-    if not injected and "website" in lower_input:
-        # fallback: generic homepage redirect
+
+    for intent, phrases in INTENT_ALIAS_MAP.items():
+        for phrase in phrases:
+            if phrase in lower_input:
+                url = INTENT_URL_MAP[intent]
+                response += f"\n\n🔗 You can explore that here: {url}"
+                return response
+
+    if "website" in lower_input:
         response += "\n\n🔗 Full site: https://www.thediamondfamily.com/"
     return response
 
