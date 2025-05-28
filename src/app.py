@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 # LangChain imports
 from langchain_core.chat_history import InMemoryChatMessageHistory
-from langchain_core.messages import BaseMessage, SystemMessage
+from langchain_core.messages import BaseMessage
 from langchain_openai import ChatOpenAI
 from langchain.prompts import (
     ChatPromptTemplate,
@@ -24,7 +24,7 @@ from langchain.prompts import (
 # ─── ENV + LOGGING ───────────────────────────────────────────────────────────
 
 load_dotenv()
-logger = logging.getLogger("gym_bot")
+logger = logging.getLogger("jewelrybox_ai")
 logger.setLevel(logging.INFO)
 
 # ─── PATHS & TEMPLATES ────────────────────────────────────────────────────────
@@ -45,17 +45,17 @@ except FileNotFoundError:
 
 # ─── ENCODE AVATAR IMAGE ──────────────────────────────────────────────────────
 
-img_path = os.path.join(ROOT, "images", "female_avatar.png")
+img_path = os.path.join(ROOT, "images", "diamond_avatar.png")
 if os.path.exists(img_path):
     with open(img_path, "rb") as img:
         IMG_URI = "data:image/png;base64," + base64.b64encode(img.read()).decode()
 else:
     logger.warning(f"Image not found at {img_path}, using fallback.")
-    IMG_URI = "https://via.placeholder.com/60x60.png?text=Bot"
+    IMG_URI = "https://via.placeholder.com/60x60/0066cc/ffffff?text=💎"
 
 # ─── FASTAPI SETUP ───────────────────────────────────────────────────────────
 
-app = FastAPI(title="JewelryBox.AI Assistant (Text Only)")
+app = FastAPI(title="JewelryBox.AI Assistant")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.getenv("ALLOWED_ORIGINS", "").split(","),
@@ -67,19 +67,64 @@ app.add_middleware(
 
 memory = InMemoryChatMessageHistory(return_messages=True)
 llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=1024, temperature=0.9)
-# Extract system prompt from JSON structure
-system_prompt_data = AGENT_ROLES["jewelry_ai"][0]["systemPrompt"]
-prompt_parts = []
-prompt_parts.append(f"You are {system_prompt_data['identity']}, a {system_prompt_data['role']}.")
-prompt_parts.append(f"Tone: {system_prompt_data['tone']}")
-prompt_parts.extend(system_prompt_data['description'])
 
-# Add natural conversation guidance
-prompt_parts.append("IMPORTANT: Communicate naturally and conversationally. Never use robotic AI language, formal disclaimers, or phrases like 'As an AI assistant' or 'I'm here to help.' Speak as a knowledgeable jewelry expert would - confident, personable, and genuinely enthusiastic about jewelry. Use contractions, casual transitions, and speak as if you're having a real conversation with a valued client.")
+system_data = AGENT_ROLES["jewelry_ai"][0]["systemPrompt"]
 
-prompt_text = " ".join(prompt_parts)
+# Format system message block
+system_prompt = f"""You are {system_data['identity']}, serving as {system_data['role']}.
+
+Tone: {system_data['tone']}
+
+{chr(10).join(system_data['description'])}
+
+Domains of Expertise:
+{chr(10).join(system_data['knowledgeDomains'])}
+
+Customer Service Principles:
+{chr(10).join(system_data['customerServiceExcellence'])}
+
+Anti-Looping Guidelines:
+Principles:
+{chr(10).join(system_data['antiLooping']['principles'])}
+Variation Techniques:
+{chr(10).join(system_data['antiLooping']['variationTechniques'])}
+Context Awareness:
+{chr(10).join(system_data['antiLooping']['contextAwareness'])}
+
+Style Guide:
+Formatting:
+{chr(10).join(system_data['styleGuide']['formatting'])}
+Response Structure Principles:
+{chr(10).join(system_data['styleGuide']['responseStructure']['principles'])}
+Formatting Guidelines:
+• Headers: {system_data['styleGuide']['responseStructure']['formatting']['headers']}
+• Emphasis: {system_data['styleGuide']['responseStructure']['formatting']['emphasis']}
+• Lists: {system_data['styleGuide']['responseStructure']['formatting']['lists']}
+• Spacing: {system_data['styleGuide']['responseStructure']['formatting']['spacing']}
+• Structure: {system_data['styleGuide']['responseStructure']['formatting']['structure']}
+Language:
+{chr(10).join(system_data['styleGuide']['language'])}
+
+Pricing Guidance:
+{chr(10).join(system_data['pricingGuidance'])}
+
+Care & Maintenance:
+{chr(10).join(system_data['careAndMaintenance'])}
+
+Gift Guidance:
+{chr(10).join(system_data['giftGuidance'])}
+
+Closing Style:
+{chr(10).join(system_data['signatureCloser'])}
+
+Tagline: {system_data['tagline']}
+
+IMPORTANT INSTRUCTION:
+{system_data['humanPrompt']}
+"""
+
 prompt_template = ChatPromptTemplate.from_messages([
-    SystemMessage(content=prompt_text),
+    SystemMessagePromptTemplate.from_template(system_prompt),
     MessagesPlaceholder(variable_name="history"),
     HumanMessagePromptTemplate.from_template("{user_input}")
 ])
@@ -157,7 +202,7 @@ async def widget(request: Request):
 # ─── CLI SANITY TEST ───────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("Gym Bot CLI Test (type 'exit')")
+    print("JewelryBox.AI CLI Test (type 'exit')")
     history = []
     while True:
         try:
@@ -165,7 +210,7 @@ if __name__ == "__main__":
             if text.lower() in ("exit", "quit"): sys.exit(0)
             res = chain.invoke({"user_input": text, "history": history})
             reply = res.content.strip()
-            print("Bot:", reply)
+            print("JewelryBox.AI:", reply)
             memory.add_user_message(text)
             memory.add_ai_message(reply)
             history = memory.messages
