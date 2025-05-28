@@ -1,3 +1,4 @@
+
 import json
 import logging
 import os
@@ -12,7 +13,7 @@ from dotenv import load_dotenv
 
 # LangChain imports
 from langchain_core.chat_history import InMemoryChatMessageHistory
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langchain.prompts import (
     ChatPromptTemplate,
@@ -45,7 +46,7 @@ except FileNotFoundError:
 
 # ─── ENCODE AVATAR IMAGE ──────────────────────────────────────────────────────
 
-img_path = os.path.join(ROOT, "images", "jewelrybox_avatar.png")
+img_path = os.path.join(ROOT, "images", "diamond_avatar.png")
 if os.path.exists(img_path):
     with open(img_path, "rb") as img:
         IMG_URI = "data:image/png;base64," + base64.b64encode(img.read()).decode()
@@ -67,9 +68,9 @@ app.add_middleware(
 
 memory = InMemoryChatMessageHistory(return_messages=True)
 llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=1024, temperature=0.9)
-prompt_text = " ".join(AGENT_ROLES["jewelry_ai"]) if isinstance(AGENT_ROLES["jewelry_ai"], list) else AGENT_ROLES["jewelry_ai"]
+prompt_text = json.dumps(AGENT_ROLES["jewelry_ai"], indent=2)
 prompt_template = ChatPromptTemplate.from_messages([
-    SystemMessagePromptTemplate.from_template(prompt_text),
+    SystemMessage(content=f"You are JewelryBox AI, a luxury jewelry consultant. Use this knowledge: {prompt_text}"),
     MessagesPlaceholder(variable_name="history"),
     HumanMessagePromptTemplate.from_template("{user_input}")
 ])

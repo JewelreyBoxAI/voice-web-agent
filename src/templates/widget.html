@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>JewelryBox.AI Chat Assistant</title>
+  <title>JewelryBox AI Chat Widget</title>
   <style>
     html, body {
       margin: 0 !important;
@@ -27,10 +27,9 @@
       height: 84px;
       border-radius: 50%;
       background: url("{{ img_uri }}") no-repeat center/cover;
-      box-shadow: 0 4px 12px rgba(0, 100, 200, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       cursor: pointer;
       transition: opacity 0.3s ease, visibility 0.3s ease;
-      border: 3px solid #0066cc;
     }
 
     #jewelry-chat-button.hidden {
@@ -47,17 +46,16 @@
       max-height: 100vh;
       background: #ffffff;
       border-radius: 10px;
-      box-shadow: 0 10px 30px rgba(0, 100, 200, 0.2);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
       overflow: hidden;
-      border: 2px solid #0066cc;
     }
 
     #jewelry-chat-header {
       display: flex;
       align-items: center;
       padding: 12px;
-      background: linear-gradient(135deg, #0066cc, #0080ff);
-      color: #ffffff;
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      color: #fff;
       font-weight: bold;
       font-size: 16px;
     }
@@ -68,15 +66,14 @@
       border-radius: 50%;
       margin-right: 10px;
       flex-shrink: 0;
-      border: 2px solid #ffffff;
     }
 
     #jewelry-chat-messages-container {
       flex: 1;
       padding: 10px;
       overflow-y: auto;
-      background: #f8faff;
-      color: #333;
+      background: #f8fafc;
+      color: #1e293b;
       scrollbar-width: none;           /* Firefox */
       -ms-overflow-style: none;        /* IE */
     }
@@ -95,24 +92,22 @@
     }
 
     .msg.bot {
-      background: linear-gradient(135deg, #0066cc, #0080ff);
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
       color: #ffffff;
       align-self: flex-start;
-      box-shadow: 0 2px 8px rgba(0, 100, 200, 0.2);
     }
 
     .msg.user {
-      background: #e6f3ff;
-      color: #0066cc;
+      background: #e2e8f0;
+      color: #1e293b;
       align-self: flex-end;
       text-align: right;
-      border: 1px solid #0066cc;
     }
 
     #typing-indicator {
       font-style: italic;
       font-size: 12px;
-      color: #0066cc;
+      color: #64748b;
       padding: 0 14px 6px;
       display: none;
     }
@@ -120,60 +115,41 @@
     #jewelry-chat-input {
       display: flex;
       flex-direction: column;
-      border-top: 2px solid #0066cc;
+      border-top: 1px solid #e2e8f0;
       background: #ffffff;
       padding: 16px;
     }
 
     #jewelry-chat-input input {
-      border: 2px solid #0066cc;
+      border: none;
       padding: 14px;
       font-size: 15px;
       border-radius: 6px;
       margin-bottom: 8px;
-      background: #ffffff;
-      transition: border-color 0.3s ease;
-    }
-
-    #jewelry-chat-input input:focus {
-      outline: none;
-      border-color: #0080ff;
-      box-shadow: 0 0 8px rgba(0, 128, 255, 0.3);
+      background: #fff;
     }
 
     #jewelry-chat-send {
       border: none;
-      background: linear-gradient(135deg, #0066cc, #0080ff);
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
       color: #ffffff;
       padding: 12px;
       font-weight: bold;
       font-size: 15px;
       cursor: pointer;
       border-radius: 4px;
-      box-shadow: 0 4px 10px rgba(0, 100, 200, 0.3);
-      transition: transform 0.2s ease;
-    }
-
-    #jewelry-chat-send:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 15px rgba(0, 100, 200, 0.4);
+      box-shadow: 0 4px 10px rgba(30, 58, 138, 0.3);
     }
 
     #jewelry-chat-clear {
       background: transparent;
-      color: #0066cc;
-      border: 2px solid #0066cc;
+      color: #64748b;
+      border: 1px solid #64748b;
       padding: 6px;
       font-size: 13px;
       margin-top: 8px;
       border-radius: 4px;
       cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    #jewelry-chat-clear:hover {
-      background: #0066cc;
-      color: #ffffff;
     }
   </style>
 </head>
@@ -181,18 +157,18 @@
   <div id="jewelry-chat-widget">
     <div id="jewelry-chat-panel">
       <div id="jewelry-chat-header">
-        <img src="{{ img_uri }}" alt="JewelryBox.AI Assistant">
-        JewelryBox.AI Assistant
+        <img src="{{ img_uri }}" alt="Bot Avatar">
+        JewelryBox AI
       </div>
       <div id="jewelry-chat-messages-container" aria-live="polite"></div>
-      <div id="typing-indicator">Your jewelry consultant is typing...</div>
+      <div id="typing-indicator">JewelryBox AI is typing...</div>
       <div id="jewelry-chat-input">
-        <input type="text" id="jewelry-chat-text" placeholder="Ask about diamonds, gemstones, or jewelry advice...">
+        <input type="text" id="jewelry-chat-text" placeholder="Ask about diamonds, jewelry, or custom pieces…">
         <button id="jewelry-chat-send">Send</button>
-        <button id="jewelry-chat-clear">Clear Chat</button>
+        <button id="jewelry-chat-clear">Clear</button>
       </div>
     </div>
-    <div id="jewelry-chat-button" aria-label="Open jewelry consultation chat"></div>
+    <div id="jewelry-chat-button" aria-label="Open chat"></div>
   </div>
 
   <script>
@@ -205,7 +181,7 @@
       const send = document.getElementById("jewelry-chat-send");
       const clear = document.getElementById("jewelry-chat-clear");
       const typing = document.getElementById("typing-indicator");
-      let history = JSON.parse(localStorage.getItem("jewelrybox_ai_history")) || [];
+      let history = JSON.parse(localStorage.getItem("jewelry_bot_history")) || [];
 
       function togglePanel() {
         const isVisible = panel.style.display === "flex";
@@ -252,9 +228,9 @@
           const data = await res.json();
           renderMsg(data.reply, "bot");
           history = data.history;
-          localStorage.setItem("jewelrybox_ai_history", JSON.stringify(history));
+          localStorage.setItem("jewelry_bot_history", JSON.stringify(history));
         } catch (e) {
-          renderMsg("⚠️ I apologize, but I'm having trouble connecting right now. Please try again in a moment.", "bot");
+          renderMsg("⚠️ Error contacting bot.", "bot");
         } finally {
           showTyping(false);
         }
@@ -262,7 +238,7 @@
 
       function clearChat() {
         history = [];
-        localStorage.removeItem("jewelrybox_ai_history");
+        localStorage.removeItem("jewelry_bot_history");
         messages.innerHTML = "";
       }
 
