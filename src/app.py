@@ -186,6 +186,42 @@ prompt_template = ChatPromptTemplate.from_messages([
 ])
 chain = prompt_template | llm
 
+# ─── KEYWORD-TO-URL MAPPING ─────────────────────────────────────────────────────
+URL_MAP = {
+    "appointment": "https://www.thediamondfamily.com/appointments/",
+    "custom ring": "https://www.thediamondfamily.com/services/custom-design/",
+    "custom engagement": "https://www.thediamondfamily.com/services/custom-design/",
+    "designers": "https://www.thediamondfamily.com/designers/",
+    "watch repair": "https://www.thediamondfamily.com/services/watch-repair/",
+    "watch battery": "https://www.thediamondfamily.com/services/watch-repair/",
+    "pearl restring": "https://www.thediamondfamily.com/services/pearl-bead-restringing/",
+    "diamond cut": "https://www.thediamondfamily.com/education/diamond-guide/",
+    "diamond guide": "https://www.thediamondfamily.com/education/diamond-guide/",
+    "browse diamonds": "https://www.thediamondfamily.com/diamonds/",
+    "appraisal": "https://www.thediamondfamily.com/services/appraisals/",
+    "promo": "https://www.thediamondfamily.com/enter-win-1000-your-purchase/",
+    "giveaway": "https://www.thediamondfamily.com/enter-win-1000-your-purchase/",
+    "support": "https://www.thediamondfamily.com/",
+    "review": "https://g.co/kgs/wgFjUyU",
+}
+
+def inject_relevant_url(user_input: str, response: str) -> str:
+    """
+    Smart URL injection based on semantic keyword triggers in user_input.
+    Prevents hallucinations and ensures traffic redirection to validated KB pages.
+    """
+    lower_input = user_input.lower()
+    injected = False
+    for keyword, url in URL_MAP.items():
+        if keyword in lower_input:
+            response += f"\n\n🔗 You can explore that here: {url}"
+            injected = True
+            break
+    if not injected and "website" in lower_input:
+        # fallback: generic homepage redirect
+        response += "\n\n🔗 Full site: https://www.thediamondfamily.com/"
+    return response
+
 # ─── REQUEST MODEL ────────────────────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
@@ -208,8 +244,9 @@ def serialize_messages(messages: list[BaseMessage]):
 async def chat(req: ChatRequest):
     try:
         history = req.history or []
-        res = chain.invoke({"user_input": req.user_input, "history": history})
-        reply = res.content.strip()
+        result = chain.invoke({"user_input": req.user_input, "history": history})
+        reply = result.content.strip()
+        reply = inject_relevant_url(req.user_input, reply)
         memory.add_user_message(req.user_input)
         memory.add_ai_message(reply)
         return JSONResponse({
