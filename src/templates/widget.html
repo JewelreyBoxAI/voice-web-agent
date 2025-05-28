@@ -29,21 +29,49 @@
       box-sizing: border-box;
     }
 
-    /* Button to toggle chat, styled as translucent X with brand blue border */
+    /* Button to toggle chat */
     #jewelry-chat-button {
       width: 48px;
       height: 48px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.9);
       border: 2px solid #3b82f6;
       cursor: pointer;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
+      transition: all 0.3s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 28px;
       font-weight: bold;
       color: #3b82f6;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    #jewelry-chat-button img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      transition: opacity 0.3s ease;
+    }
+
+    #jewelry-chat-button .close-x {
+      position: absolute;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      line-height: 1;
+    }
+
+    #jewelry-chat-button.chat-open img {
+      opacity: 0;
+    }
+
+    #jewelry-chat-button.chat-open .close-x {
+      opacity: 1;
     }
 
     #jewelry-chat-button.hidden {
@@ -169,6 +197,44 @@
       border-radius: 4px;
       cursor: pointer;
     }
+
+    /* Structured content formatting for bot messages */
+    .msg.bot .header {
+      margin: 16px 0 8px 0;
+      font-size: 17px;
+      font-weight: 700;
+      color: #ffffff;
+      display: block;
+    }
+
+    .msg.bot ul {
+      margin: 4px 0;
+      padding-left: 20px;
+    }
+
+    .msg.bot li {
+      margin: 2px 0;
+      line-height: 1.4;
+    }
+
+    .msg.bot p {
+      margin: 4px 0;
+      line-height: 1.5;
+    }
+
+    .msg.bot strong {
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .msg.bot em {
+      font-style: italic;
+      color: #e2e8f0;
+    }
+
+    .msg.bot .section {
+      margin: 8px 0;
+    }
   </style>
 </head>
 <body>
@@ -186,7 +252,10 @@
         <button id="jewelry-chat-clear">Clear</button>
       </div>
     </div>
-    <div id="jewelry-chat-button" aria-label="Open chat">×</div>
+    <div id="jewelry-chat-button" aria-label="Open chat">
+      <img src="{{ img_uri }}" alt="Bot Avatar">
+      <span class="close-x">×</span>
+    </div>
   </div>
 
   <script>
@@ -204,8 +273,15 @@
       function togglePanel() {
         const isVisible = panel.style.display === "flex";
         panel.style.display = isVisible ? "none" : "flex";
-        button.classList.toggle("hidden", !isVisible);
-        if (!isVisible) {
+        
+        if (isVisible) {
+          // Chat is closing
+          button.classList.remove("chat-open");
+          button.setAttribute("aria-label", "Open chat");
+        } else {
+          // Chat is opening
+          button.classList.add("chat-open");
+          button.setAttribute("aria-label", "Close chat");
           input.focus();
           messages.scrollTop = messages.scrollHeight;
         }
@@ -217,10 +293,65 @@
         return div.innerHTML;
       }
 
+      function formatChatResponse(text) {
+        // Convert plain text response to ChatGPT-style structured HTML
+        let formatted = text;
+
+        // Convert ### headers to bold text with line break before
+        formatted = formatted.replace(/###\s*([^:\n]+):?/gm, '<br><span class="header">$1</span>');
+        
+        // Convert text headers (text followed by colon) to bold headers with line break
+        formatted = formatted.replace(/\n([A-Z][^:\n]*):(?=\n)/gm, '<br><span class="header">$1:</span>');
+        
+        // Handle **bold** and *italic* formatting
+        formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        formatted = formatted.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+        // Convert numbered lists
+        formatted = formatted.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+        
+        // Convert bullet points (various formats) - remove extra spacing
+        formatted = formatted.replace(/^[•·-]\s+(.+)$/gm, '<li>$1</li>');
+        formatted = formatted.replace(/^\*\s+(.+)$/gm, '<li>$1</li>');
+
+        // Wrap consecutive <li> elements in <ul> tags and remove excess spacing
+        formatted = formatted.replace(/(<li>.*?<\/li>)(\s*<li>.*?<\/li>)*/gs, (match) => {
+          // Remove excess whitespace between list items
+          const cleanMatch = match.replace(/\s*<li>/g, '<li>').replace(/<\/li>\s*/g, '</li>');
+          return '<ul>' + cleanMatch + '</ul>';
+        });
+
+        // Convert paragraph breaks but preserve single line breaks for better spacing
+        formatted = formatted.replace(/\n\n+/g, '</p><p>');
+        
+        // Handle single line breaks within content
+        formatted = formatted.replace(/\n(?!<)/g, '<br>');
+        
+        // Clean up multiple br tags and ensure proper spacing
+        formatted = formatted.replace(/<br>\s*<br>/g, '<br>');
+        formatted = formatted.replace(/^<br>/, ''); // Remove leading br
+        
+        // Wrap content in paragraphs if needed
+        if (!formatted.includes('<span class="header">') && !formatted.includes('<ul>')) {
+          formatted = '<p>' + formatted + '</p>';
+        }
+
+        // Clean up empty paragraphs
+        formatted = formatted.replace(/<p>\s*<\/p>/g, '');
+        
+        return formatted;
+      }
+
       function renderMsg(text, cls) {
         const div = document.createElement("div");
         div.className = "msg " + cls;
-        div.innerHTML = escapeHTML(text);
+        
+        if (cls === "bot") {
+          div.innerHTML = formatChatResponse(text);
+        } else {
+          div.innerHTML = escapeHTML(text);
+        }
+        
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
       }

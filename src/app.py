@@ -43,6 +43,17 @@ except FileNotFoundError:
     logger.error(f"Prompt file not found at {prompt_file}")
     sys.exit("Prompt configuration is missing. Aborting startup.")
 
+# ─── LOAD KNOWLEDGEBASE CONFIG ───────────────────────────────────────────────
+
+kb_file = os.path.join(ROOT, "prompts", "diamond_family_kb.json")
+try:
+    with open(kb_file, "r", encoding="utf-8") as f:
+        DIAMOND_KB = json.load(f)["diamond_family_kb"]
+except FileNotFoundError:
+    logger.warning(f"Knowledgebase file not found at {kb_file}")
+    DIAMOND_KB = {}
+
+
 # ─── ENCODE AVATAR IMAGE ──────────────────────────────────────────────────────
 
 img_path = os.path.join(ROOT, "images", "diamond_avatar.png")
@@ -69,6 +80,19 @@ memory = InMemoryChatMessageHistory(return_messages=True)
 llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=1024, temperature=0.9)
 
 system_data = AGENT_ROLES["jewelry_ai"][0]["systemPrompt"]
+
+# ─── INJECT DESIGNER LISTS ────────────────────────────────────────────────────
+
+designer_guardrails = DIAMOND_KB.get("productsDesigners", {}).get("guardrails", {}).get("designerVerification", {})
+
+allowed_designers = designer_guardrails.get("allowedDesigners", [])
+denied_designers = designer_guardrails.get("deniedDesigners", [])
+designer_response_policy = designer_guardrails.get("responsePolicy", "If unsure, ask the user clarifying questions.")
+
+formatted_allowed = "\n• " + "\n• ".join(sorted(allowed_designers))
+formatted_denied = "\n• " + "\n• ".join(sorted(denied_designers))
+
+logger.info(f"Loaded {len(allowed_designers)} allowed designers and {len(denied_designers)} denied designers into system prompt.")
 
 # Format system message block
 system_prompt = f"""You are {system_data['identity']}, serving as {system_data['role']}.
@@ -116,6 +140,38 @@ Gift Guidance:
 
 Closing Style:
 {chr(10).join(system_data['signatureCloser'])}
+
+Landmine Detection and Diffusion Strategy:
+{system_data['landmineDetectionAndDiffusion']['strategy']}
+
+Risk Categories and Handling:
+• Ethical Sourcing: {system_data['landmineDetectionAndDiffusion']['categories']['ethicalSourcing']}
+• Pricing Risks: {system_data['landmineDetectionAndDiffusion']['categories']['pricingRisks']}
+• Lab Diamond Confusion: {system_data['landmineDetectionAndDiffusion']['categories']['labDiamondConfusion']}
+• Certification Claims: {system_data['landmineDetectionAndDiffusion']['categories']['certificationClaims']}
+• Care and Cleaning: {system_data['landmineDetectionAndDiffusion']['categories']['careAndCleaning']}
+• Service Scope: {system_data['landmineDetectionAndDiffusion']['categories']['serviceScope']}
+• Memory Mismatch: {system_data['landmineDetectionAndDiffusion']['categories']['memoryMismatch']}
+• Location Mismatch: {system_data['landmineDetectionAndDiffusion']['categories']['locationMismatch']}
+
+Designer Knowledge Guardrails:
+
+Designers Carried by Diamond Family:
+{formatted_allowed}
+
+Designers NOT Carried:
+{formatted_denied}
+
+Response Policy:
+{designer_response_policy}
+
+Knowledgebase Profile:
+• Location: {DIAMOND_KB.get('businessProfile', {}).get('primaryLocation', 'N/A')}
+• Website: {DIAMOND_KB.get('businessProfile', {}).get('contact', {}).get('website', 'N/A')}
+• Appointment Link: {DIAMOND_KB.get('services', {}).get('scheduling', {}).get('preferredTool', 'N/A')}
+• POS System: {DIAMOND_KB.get('systemTools', {}).get('POS', 'N/A')}
+• CRM: {DIAMOND_KB.get('systemTools', {}).get('CRM', 'N/A')}
+• Featured Event: {DIAMOND_KB.get('eventsPromotions', {}).get('calendar', [{}])[0].get('event', 'N/A')}
 
 Tagline: {system_data['tagline']}
 

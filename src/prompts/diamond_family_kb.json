@@ -1,0 +1,262 @@
+{
+  "diamond_family_kb": {
+    "businessProfile": {
+      "storeName": "The Diamond Family",
+      "primaryLocation": "14441 Manchester Rd. Ballwin, MO 63011",
+      "contact": {
+        "emailPhone": "(636) 391-6622",
+        "website": "https://www.thediamondfamily.com/"
+      },
+      "socialMediaLinks": [
+        "https://www.facebook.com/TheDiamondFamily",
+        "https://www.instagram.com/thediamondfam/",
+        "https://www.linkedin.com/in/the-diamond-family-3abaab1a9/",
+        "https://www.pinterest.com/TheDiamondFamily/",
+        "https://twitter.com/TheDiamondFam",
+        "https://www.youtube.com/channel/UCqJiiD43cHXF8VzUd7Y8hmw"
+      ],
+      "hoursOfOperation": {
+        "Mon": "Closed",
+        "Tue": "10AM - 6PM",
+        "Wed": "10AM - 6PM",
+        "Thu": "10AM - 7PM",
+        "Fri": "10AM - 6PM",
+        "Sat": "10AM - 3PM",
+        "Sun": "Closed"
+      },
+      "googleBusinessLink": "https://g.co/kgs/wgFjUyU"
+    },
+    "productsDesigners": {
+      "topCategories": [
+        "https://www.thediamondfamily.com/catalog/bridal-engagement/?type=engagement-ring",
+        "https://www.thediamondfamily.com/catalog/wedding-band/",
+        "https://www.thediamondfamily.com/catalog/wedding-band/?gender=W&price_0=&price_1=",
+        "https://www.thediamondfamily.com/catalog/bridal-engagement/?type=wedding-band&sub_type=mens-wedding-bands",
+        "https://www.thediamondfamily.com/diamonds1/",
+        "https://www.thediamondfamily.com/diamonds/",
+        "https://www.thediamondfamily.com/lab-grown-diamonds/",
+        "https://www.thediamondfamily.com/st-louis-area-colored-diamonds/",
+        "https://www.thediamondfamily.com/cut-of-perfection/",
+        "https://www.thediamondfamily.com/education/diamond-guide/",
+        "https://www.thediamondfamily.com/designers/",
+        "https://www.thediamondfamily.com/catalog/",
+        "https://www.thediamondfamily.com/designers/diamond-family-estate-jewelry/",
+        "https://www.thediamondfamily.com/catalog/?type=watch",
+        "https://www.thediamondfamily.com/services/custom-design/",
+        "https://www.thediamondfamily.com/portfolio/",
+        "https://www.thediamondfamily.com/how-it-works/",
+        "https://www.thediamondfamily.com/start-your-design/",
+        "https://www.thediamondfamily.com/services/",
+        "https://www.thediamondfamily.com/services/appraisals/",
+        "https://www.thediamondfamily.com/services/corporate-gifts/",
+        "https://www.thediamondfamily.com/services/engraving/",
+        "https://www.thediamondfamily.com/services/financing/",
+        "https://bestjewelerstl.com/tdf-jewelry-repair",
+        "https://www.thediamondfamily.com/services/pearl-bead-restringing/",
+        "https://www.thediamondfamily.com/services/watch-repair/"
+      ],
+      "designers": "https://www.thediamondfamily.com/designers/",
+      "customDesign": "Yes - https://www.thediamondfamily.com/services/custom-design/",
+      "guardrails": {
+        "designerVerification": {
+          "allowedDesigners": [
+            "S. Kashi",
+            "Gabriel Bridal",
+            "Mars Fine Jewelry",
+            "CrownRing",
+            "Roman & Jules",
+            "Bulova",
+            "Cassandra Erin",
+            "Chisel",
+            "Citizen",
+            "Clearance Items",
+            "Diadori",
+            "Dilamani",
+            "Estate Jewelry",
+            "Frank Reubel Designs",
+            "Frederic Duclos",
+            "Gabriel Bridal Catalog",
+            "Gabriel Fashion",
+            "Gabriel Fashion Catalog",
+            "Gabriel Men's Bands",
+            "Gabriel Stackables",
+            "Herco",
+            "Jewelex",
+            "Jord Watches",
+            "LaFonn",
+            "Leo Ingwer",
+            "Leslie's",
+            "Makur",
+            "Meira T",
+            "Overnight Mountings",
+            "Pre-Owned Luxury Watches",
+            "Quality Gold",
+            "Rhythm of Love",
+            "Royal Jewelry",
+            "Shey Couture",
+            "S. Kashi Bridal",
+            "True Origin",
+            "Tycoon",
+            "Unique Settings of New York",
+            "Venetti",
+            "Wild Giraffe",
+            "WOLF"
+          ],
+          "deniedDesigners": [
+            "Cartier",
+            "Tiffany & Co.",
+            "Van Cleef & Arpels",
+            "Harry Winston",
+            "Chopard",
+            "Graff",
+            "Bvlgari",
+            "Buccellati",
+            "De Beers",
+            "Mikimoto",
+            "Chaumet",
+            "Rolex",
+            "Patek Philippe",
+            "Audemars Piguet",
+            "Omega",
+            "Tag Heuer",
+            "Hublot",
+            "Jaeger-LeCoultre",
+            "Panerai",
+            "Breitling",
+            "Richard Mille",
+            "Verragio",
+            "Tacori",
+            "Simon G.",
+            "A. Jaffe",
+            "Scott Kay",
+            "Kirk Kara",
+            "Ritani",
+            "Benchmark",
+            "Christopher Designs",
+            "Natalie K",
+            "Vatche",
+            "Zales",
+            "Kay Jewelers",
+            "Jared",
+            "Neil Lane",
+            "Le Vian",
+            "Vera Wang Love",
+            "Pandora",
+            "Blue Nile",
+            "James Allen",
+            "Mejuri",
+            "Aurate",
+            "Brilliant Earth",
+            "Vrai",
+            "Catbird NYC",
+            "Missoma",
+            "Ana Luisa",
+            "BaubleBar",
+            "Swarovski",
+            "Alex and Ani",
+            "Kendra Scott",
+            "Betsey Johnson",
+            "Claire's",
+            "Fossil",
+            "Tory Burch",
+            "Michael Kors"
+          ],
+          "responsePolicy": "If a user mentions a denied designer, clarify that Diamond Family does not carry that brand and politely offer a comparable alternative from the approved designer list. Never generate or infer that any denied designer is part of the store's catalog. If a designer or supplier is mentioned that is not on either list, politely inform the user that Diamond Family does not carry that brand, followed by qualifying questions to assess what available designer would meet their needs."
+        }
+      }
+    },
+    "services": {
+      "categories": [
+        "Engagement",
+        "Wedding",
+        "Diamonds",
+        "Designers",
+        "Jewelry",
+        "Estate",
+        "Watches",
+        "Custom",
+        "About",
+        "Service",
+        "Sell",
+        "Events"
+      ],
+      "scheduling": {
+        "preferredTool": "https://www.thediamondfamily.com/appointments/",
+        "appointmentBased": true
+      }
+    },
+    "team": {
+      "members": [
+        {
+          "name": "Jimmy",
+          "role": "Sales"
+        },
+        {
+          "name": "Johnathan",
+          "role": "Sales"
+        },
+        {
+          "name": "Linda",
+          "role": "Operations Manager"
+        },
+        {
+          "name": "Todd",
+          "role": "Sales, Buying and Trading"
+        }
+      ],
+      "leadRouting": {
+        "sales": [
+          "Johnathan",
+          "Jimmy"
+        ],
+        "buyingTrading": "Todd",
+        "escalations": "Linda"
+      },
+      "bookingCalendar": "https://www.thediamondfamily.com/appointments/"
+    },
+    "systemTools": {
+      "POS": "The Edge POS",
+      "websiteCMS": "Thinkspace",
+      "CRM": "Jewelrybox.ai",
+      "reviewChat": "Podium",
+      "inventorySync": "Scrape and API preferred"
+    },
+    "eventsPromotions": {
+      "calendar": [
+        {
+          "event": "Half Off Half The Store",
+          "dates": "June 26, 27, 28",
+          "location": "In Store",
+          "details": "50% off half the store. Up to 50% off the rest."
+        },
+        {
+          "event": "Bands & Bubbly",
+          "dates": "Oct 1, 2, 3",
+          "location": "In Store",
+          "details": "500+ Wedding Band Designs"
+        },
+        {
+          "event": "Ladies Night",
+          "date": "Nov 7",
+          "location": "In Store",
+          "details": "Save the Date"
+        },
+        {
+          "event": "Christmas Campaign",
+          "dates": "Mid Nov to Dec 24",
+          "location": "In Store",
+          "details": "Launch Nov 15"
+        }
+      ],
+      "currentOffer": "https://www.thediamondfamily.com/enter-win-1000-your-purchase/"
+    },
+    "policies": {
+      "custom": "Hand off to an expert before any deals, trades or promises are made. Push them to an appointment with the right rep."
+    },
+    "aiSettings": {
+      "voiceTone": "Warm, Educational, family-owned, expert-style",
+      "goldPriceIntegration": true,
+      "upsellCrossSellEnabled": true
+    }
+  }
+}
