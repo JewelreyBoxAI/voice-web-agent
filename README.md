@@ -103,7 +103,7 @@ This isn’t just a chatbot—it's an **AI concierge that mimics real staff beha
 
 > Want to clone this stack for your industry? Swap out the vector index, rewrite the prompt, and deploy. Done.
 
-⚡ Rick out.
+
 
 
 ## Quick Start (Docker - Recommended)
