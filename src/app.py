@@ -21,6 +21,9 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 
+# Memory Manager import
+from . import memory_manager
+
 # ─── ENV + LOGGING ───────────────────────────────────────────────────────────
 
 load_dotenv()
@@ -186,31 +189,6 @@ prompt_template = ChatPromptTemplate.from_messages([
 ])
 chain = prompt_template | llm
 
-# ─── INTENT ROUTING: JSON-BASED CONFIGURATION ─────────────────────────────
-
-intents_file = os.path.join(ROOT, "prompts", "intents.json")
-try:
-    with open(intents_file, "r", encoding="utf-8") as f:
-        INTENTS = json.load(f)
-except FileNotFoundError:
-    logger.warning(f"Intents file not found at {intents_file}")
-    INTENTS = {}
-
-
-def inject_relevant_url(user_input: str, response: str) -> str:
-    """
-    Match user intent using keyword synonyms → inject single relevant URL.
-    Strict 1:1 mapping with no fallbacks or multi-URL injection.
-    """
-    user_input_lower = user_input.lower()
-    for intent_key, intent_data in INTENTS.items():
-        for synonym in intent_data["synonyms"]:
-            if synonym in user_input_lower:
-                return response + f"\n\n🔗 You can explore that here: {intent_data['url']}"
-    
-    # No match? No leak.
-    return response
-
 # ─── REQUEST MODEL ────────────────────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
@@ -235,7 +213,7 @@ async def chat(req: ChatRequest):
         history = req.history or []
         result = chain.invoke({"user_input": req.user_input, "history": history})
         reply = result.content.strip()
-        reply = inject_relevant_url(req.user_input, reply)
+        reply = memory_manager.inject_relevant_url(req.user_input, reply)
         memory.add_user_message(req.user_input)
         memory.add_ai_message(reply)
         return JSONResponse({
