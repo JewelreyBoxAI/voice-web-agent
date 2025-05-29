@@ -25,12 +25,8 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 
-# Memory Manager import (updated for Vercel compatibility)
-try:
-    from . import memory_manager
-except ImportError:
-    # Fallback for direct execution or different import contexts
-    import memory_manager
+# Memory Manager import
+from . import memory_manager
 
 # ─── ENV + LOGGING ───────────────────────────────────────────────────────────
 
