@@ -1,0 +1,41 @@
+# Development files
+.git/
+.gitignore
+*.pyc
+__pycache__/
+.pytest_cache/
+.coverage
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+deploy.sh
+deploy.ps1
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (optional - include if you want docs)
+DEBUG_SUMMARY.md
+SETUP.md
+
+# Large files that aren't needed
+*.pkl
+*.model
+*.bin
+
+# Test files
+test/
+tests/ 

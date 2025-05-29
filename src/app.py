@@ -3,12 +3,16 @@ import logging
 import os
 import sys
 import base64
+from dotenv import load_dotenv
+
+# Load environment variables FIRST before any other imports
+load_dotenv()
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from dotenv import load_dotenv
 
 # LangChain imports
 from langchain_core.chat_history import InMemoryChatMessageHistory
@@ -21,12 +25,15 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 
-# Memory Manager import
-from . import memory_manager
+# Memory Manager import (updated for Vercel compatibility)
+try:
+    from . import memory_manager
+except ImportError:
+    # Fallback for direct execution or different import contexts
+    import memory_manager
 
 # ─── ENV + LOGGING ───────────────────────────────────────────────────────────
 
-load_dotenv()
 logger = logging.getLogger("jewelrybox_ai")
 logger.setLevel(logging.INFO)
 
@@ -59,7 +66,7 @@ except FileNotFoundError:
 
 # ─── ENCODE AVATAR IMAGE ──────────────────────────────────────────────────────
 
-img_path = os.path.join(ROOT, "images", "diamond_avatar.png")
+img_path = os.path.join(ROOT, "images", "male_avatar.png.png")
 if os.path.exists(img_path):
     with open(img_path, "rb") as img:
         IMG_URI = "data:image/png;base64," + base64.b64encode(img.read()).decode()
