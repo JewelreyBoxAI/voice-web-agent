@@ -10,7 +10,7 @@ load_dotenv()
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
@@ -264,6 +264,14 @@ async def widget(request: Request):
             "img_uri": IMG_URI,
         },
     )
+
+# ─── FAVICON ENDPOINT ────────────────────────────────────────────────────────
+
+@app.get("/favicon.ico")
+async def favicon():
+    """Serve the favicon"""
+    favicon_path = os.path.join(ROOT, "images", "diamond.ico")
+    return FileResponse(favicon_path, media_type="image/x-icon")
 
 # ─── CLI SANITY TEST ───────────────────────────────────────────────────────────
 
