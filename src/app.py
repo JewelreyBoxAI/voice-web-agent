@@ -253,11 +253,14 @@ async def clear_chat():
 @app.get("/widget", response_class=HTMLResponse)
 async def widget(request: Request):
     """Render the chat widget UI"""
+    # Force HTTPS for production deployments (Render.com, etc.)
+    scheme = "https" if "onrender.com" in str(request.url.netloc) or request.url.scheme == "https" else request.url.scheme
+    
     return templates.TemplateResponse(
         "widget.html",
         {
             "request": request,
-            "chat_url": f"{request.url.scheme}://{request.url.netloc}/chat",
+            "chat_url": f"{scheme}://{request.url.netloc}/chat",
             "img_uri": IMG_URI,
         },
     )
