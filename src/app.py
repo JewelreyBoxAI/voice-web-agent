@@ -381,6 +381,17 @@ async def widget(request: Request):
         },
     )
 
+# ─── STATIC FILES ENDPOINT ────────────────────────────────────────────────────
+
+@app.get("/static/images/custom_components/{filename}")
+async def serve_custom_components(filename: str):
+    """Serve custom component images"""
+    file_path = os.path.join(ROOT, "images", "custom_components", filename)
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    else:
+        return JSONResponse(status_code=404, content={"error": "File not found"})
+
 # ─── FAVICON ENDPOINT ────────────────────────────────────────────────────────
 
 @app.get("/favicon.ico")
