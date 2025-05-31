@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JewelryBox AI Voice Chat Widget</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <style>
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      height: 100% !important;
+      overflow: hidden;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    }
+
+    #jewelry-chat-widget {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 0 16px;
+      box-sizing: border-box;
+    }
+
+    /* Button to toggle chat */
+    #jewelry-chat-button {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid #3b82f6;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: bold;
+      color: #3b82f6;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    #jewelry-chat-button img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      transition: opacity 0.3s ease;
+    }
+
+    #jewelry-chat-button .close-x {
+      position: absolute;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      line-height: 1;
+    }
+
+    #jewelry-chat-button.chat-open img {
+      opacity: 0;
+    }
+
+    #jewelry-chat-button.chat-open .close-x {
+      opacity: 1;
+    }
+
+    #jewelry-chat-button.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    /* Chat panel container */
+    #jewelry-chat-panel {
+      display: none;
+      flex-direction: column;
+      width: 360px;
+      max-width: 95vw;
+      height: 600px;
+      max-height: 85vh;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 10px 10px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    /* Header of the chat panel */
+    #jewelry-chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      color: #fff;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    #jewelry-chat-header .left {
+      display: flex;
+      align-items: center;
+    }
+
+    #jewelry-chat-header img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+
+    /* Voice controls in header */
+    .voice-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .voice-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    .voice-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .voice-btn.active {
+      background: #ef4444;
+      animation: pulse 1.5s infinite;
+    }
+
+    .voice-btn.connecting {
+      background: #f59e0b;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Voice status indicator */
+    .voice-status {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.8);
+      margin-left: 8px;
+    }
+
+    /* Messages display area */
+    #jewelry-chat-messages-container {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      background: #f8fafc;
+      color: #1e293b;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    #jewelry-chat-messages-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .msg {
+      margin: 10px 0;
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 20px;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .msg.bot {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      color: #ffffff;
+      align-self: flex-start;
+    }
+
+    .msg.user {
+      background: #e2e8f0;
+      color: #1e293b;
+      align-self: flex-end;
+      text-align: right;
+    }
+
+    .msg.voice {
+      background: #10b981;
+      color: #ffffff;
+    }
+
+    .msg.transcript {
+      background: #8b5cf6;
+      color: #ffffff;
+      font-style: italic;
+    }
+
+    #typing-indicator {
+      font-style: italic;
+      font-size: 12px;
+      color: #64748b;
+      padding: 0 14px 6px;
+      display: none;
+    }
+
+    /* Input section at the bottom of chat */
+    #jewelry-chat-input {
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid #e2e8f0;
+      background: #ffffff;
+      padding: 16px;
+    }
+
+    #jewelry-chat-input input {
+      border: none;
+      padding: 14px;
+      font-size: 15px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      background: #fff;
+    }
+
+    #jewelry-chat-send {
+      border: none;
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      color: #ffffff;
+      padding: 12px;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      border-radius: 4px;
+      box-shadow: 0 4px 10px rgba(30, 58, 138, 0.3);
+    }
+
+    #jewelry-chat-clear {
+      background: transparent;
+      color: #64748b;
+      border: 1px solid #64748b;
+      padding: 6px;
+      font-size: 13px;
+      margin-top: 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* Mode toggle */
+    .mode-toggle {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .mode-btn.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    /* Structured content formatting for bot messages */
+    .msg.bot .header {
+      margin: 16px 0 8px 0;
+      font-size: 17px;
+      font-weight: 700;
+      color: #ffffff;
+      display: block;
+    }
+
+    .msg.bot ul {
+      margin: 4px 0;
+      padding-left: 20px;
+    }
+
+    .msg.bot li {
+      margin: 2px 0;
+      line-height: 1.4;
+    }
+
+    .msg.bot p {
+      margin: 4px 0;
+      line-height: 1.5;
+    }
+
+    .msg.bot strong {
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .msg.bot em {
+      font-style: italic;
+      color: #e2e8f0;
+    }
+
+    .msg.bot .section {
+      margin: 8px 0;
+    }
+
+    /* Hidden audio element for voice playback */
+    #voice-audio {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="jewelry-chat-widget">
+    <div id="jewelry-chat-panel">
+      <div id="jewelry-chat-header">
+        <div class="left">
+          <img src="{{ img_uri }}" alt="Bot Avatar">
+          <div>
+            <div>JewelryBox AI</div>
+            <div class="voice-status" id="voice-status">Voice Ready</div>
+          </div>
+        </div>
+        <div class="voice-controls">
+          <button class="voice-btn" id="voice-toggle" title="Toggle Voice">🎤</button>
+        </div>
+      </div>
+      <div id="jewelry-chat-messages-container" aria-live="polite"></div>
+      <div id="typing-indicator">JewelryBox AI is typing...</div>
+      <div id="jewelry-chat-input">
+        <div class="mode-toggle">
+          <button class="mode-btn active" data-mode="text">💬 Text</button>
+          <button class="mode-btn" data-mode="voice">🎤 Voice</button>
+        </div>
+        <input type="text" id="user-input" placeholder="Ask about jewelry, diamonds, or services..." aria-label="Chat Input">
+        <button id="jewelry-chat-send">Send</button>
+        <button id="jewelry-chat-clear">Clear Chat</button>
+      </div>
+    </div>
+    <div id="jewelry-chat-button">
+      <img src="{{ img_uri }}" alt="Open Chat">
+      <span class="close-x">×</span>
+    </div>
+  </div>
+
+  <!-- Hidden audio element for voice output -->
+  <audio id="voice-audio" autoplay></audio>
+
+  <script>
+    class JewelryVoiceChat {
+      constructor() {
+        this.chatHistory = [];
+        this.isOpen = false;
+        this.mode = 'text'; // 'text' or 'voice'
+        
+        // Voice-related properties
+        this.pc = null; // WebRTC peer connection
+        this.dataChannel = null;
+        this.ephemeralKey = null;
+        this.isVoiceConnected = false;
+        this.isVoiceActive = false;
+        this.lastUserInput = ''; // Track last user voice input
+        
+        this.initializeElements();
+        this.setupEventListeners();
+        this.loadChatHistory();
+      }
+
+      initializeElements() {
+        this.button = document.getElementById('jewelry-chat-button');
+        this.panel = document.getElementById('jewelry-chat-panel');
+        this.messagesContainer = document.getElementById('jewelry-chat-messages-container');
+        this.userInput = document.getElementById('user-input');
+        this.sendButton = document.getElementById('jewelry-chat-send');
+        this.clearButton = document.getElementById('jewelry-chat-clear');
+        this.typingIndicator = document.getElementById('typing-indicator');
+        this.voiceToggle = document.getElementById('voice-toggle');
+        this.voiceStatus = document.getElementById('voice-status');
+        this.voiceAudio = document.getElementById('voice-audio');
+        this.modeBtns = document.querySelectorAll('.mode-btn');
+      }
+
+      setupEventListeners() {
+        // Existing text chat listeners
+        this.button.addEventListener('click', () => this.toggleChat());
+        this.sendButton.addEventListener('click', () => this.sendMessage());
+        this.clearButton.addEventListener('click', () => this.clearChat());
+        this.userInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') this.sendMessage();
+        });
+
+        // Voice-related listeners
+        this.voiceToggle.addEventListener('click', () => this.toggleVoice());
+        
+        // Mode toggle listeners
+        this.modeBtns.forEach(btn => {
+          btn.addEventListener('click', () => this.setMode(btn.dataset.mode));
+        });
+      }
+
+      toggleChat() {
+        this.isOpen = !this.isOpen;
+        if (this.isOpen) {
+          this.panel.style.display = 'flex';
+          this.button.classList.add('chat-open');
+          this.userInput.focus();
+        } else {
+          this.panel.style.display = 'none';
+          this.button.classList.remove('chat-open');
+          this.disconnectVoice();
+        }
+      }
+
+      setMode(mode) {
+        this.mode = mode;
+        this.modeBtns.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+
+        if (mode === 'voice' && !this.isVoiceConnected) {
+          this.initializeVoice();
+        } else if (mode === 'text' && this.isVoiceConnected) {
+          this.disconnectVoice();
+        }
+
+        // Update input placeholder
+        this.userInput.placeholder = mode === 'voice' ? 
+          'Voice mode active - click microphone to talk' : 
+          'Ask about jewelry, diamonds, or services...';
+      }
+
+      async initializeVoice() {
+        try {
+          this.voiceToggle.classList.add('connecting');
+          this.voiceStatus.textContent = 'Connecting...';
+          
+          // Get ephemeral token from backend
+          const response = await fetch('{{ voice_session_url }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to create voice session');
+          }
+          
+          const sessionData = await response.json();
+          this.ephemeralKey = sessionData.client_secret.value;
+          
+          // Initialize WebRTC connection
+          await this.setupWebRTC();
+          
+        } catch (error) {
+          console.error('Failed to initialize voice:', error);
+          this.voiceStatus.textContent = 'Voice Error';
+          this.voiceToggle.classList.remove('connecting');
+          this.addMessage('bot', 'Sorry, voice functionality is temporarily unavailable. Please use text chat.');
+        }
+      }
+
+      async setupWebRTC() {
+        // Create peer connection
+        this.pc = new RTCPeerConnection();
+        
+        // Set up audio output
+        this.pc.ontrack = (event) => {
+          this.voiceAudio.srcObject = event.streams[0];
+        };
+        
+        // Add local audio input
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(track => this.pc.addTrack(track, stream));
+        } catch (error) {
+          console.error('Failed to get microphone access:', error);
+          throw new Error('Microphone access required for voice chat');
+        }
+        
+        // Set up data channel for events
+        this.dataChannel = this.pc.createDataChannel('oai-events');
+        this.dataChannel.addEventListener('message', (event) => {
+          this.handleVoiceEvent(JSON.parse(event.data));
+        });
+        
+        // Create offer and connect
+        const offer = await this.pc.createOffer();
+        await this.pc.setLocalDescription(offer);
+        
+        const baseUrl = 'https://api.openai.com/v1/realtime';
+        const model = 'gpt-4o-realtime-preview-2024-12-17';
+        
+        const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
+          method: 'POST',
+          body: offer.sdp,
+          headers: {
+            'Authorization': `Bearer ${this.ephemeralKey}`,
+            'Content-Type': 'application/sdp'
+          }
+        });
+        
+        if (!sdpResponse.ok) {
+          throw new Error('Failed to establish voice connection');
+        }
+        
+        const answer = {
+          type: 'answer',
+          sdp: await sdpResponse.text()
+        };
+        
+        await this.pc.setRemoteDescription(answer);
+        
+        this.isVoiceConnected = true;
+        this.voiceToggle.classList.remove('connecting');
+        this.voiceStatus.textContent = 'Voice Ready';
+        this.addMessage('bot', '🎤 Voice mode activated! Click the microphone to start talking.');
+      }
+
+      toggleVoice() {
+        if (!this.isVoiceConnected) {
+          this.setMode('voice');
+          return;
+        }
+
+        this.isVoiceActive = !this.isVoiceActive;
+        this.voiceToggle.classList.toggle('active', this.isVoiceActive);
+        this.voiceStatus.textContent = this.isVoiceActive ? 'Listening...' : 'Voice Ready';
+      }
+
+      handleVoiceEvent(event) {
+        console.log('Voice event:', event);
+        
+        switch (event.type) {
+          case 'session.created':
+            console.log('Voice session created');
+            break;
+            
+          case 'input_audio_buffer.speech_started':
+            this.voiceStatus.textContent = 'Speaking...';
+            break;
+            
+          case 'input_audio_buffer.speech_stopped':
+            this.voiceStatus.textContent = 'Processing...';
+            break;
+            
+          case 'response.audio_transcript.delta':
+            // Show incremental transcript
+            this.updateTranscript(event.delta, false);
+            break;
+            
+          case 'response.audio_transcript.done':
+            // Final transcript
+            this.addMessage('user', event.transcript, 'transcript');
+            this.lastUserInput = event.transcript; // Store for processing
+            break;
+            
+          case 'response.audio.delta':
+            // Audio is played automatically via WebRTC
+            break;
+            
+          case 'response.done':
+            this.voiceStatus.textContent = 'Voice Ready';
+            if (event.response.output && event.response.output[0]) {
+              const output = event.response.output[0];
+              if (output.content && output.content[0] && output.content[0].text) {
+                // Process voice response through same pipeline as text
+                this.processVoiceResponse(this.lastUserInput || '', output.content[0].text);
+              }
+            }
+            break;
+            
+          case 'error':
+            console.error('Voice error:', event);
+            this.voiceStatus.textContent = 'Voice Error';
+            this.addMessage('bot', 'Sorry, there was a voice processing error.');
+            break;
+        }
+      }
+
+      async processVoiceResponse(userInput, aiResponse) {
+        try {
+          // Send voice response through the same processing pipeline as text
+          const response = await fetch('{{ voice_process_url }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_input: userInput,
+              ai_response: aiResponse
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            // Add processed response with same formatting as text chat
+            this.addMessage('bot', data.processed_response, 'voice');
+            
+            // Update chat history for consistency
+            this.chatHistory.push({ role: 'human', content: userInput });
+            this.chatHistory.push({ role: 'ai', content: data.processed_response });
+            this.saveChatHistory();
+          } else {
+            // Fallback to original response if processing fails
+            this.addMessage('bot', aiResponse, 'voice');
+          }
+        } catch (error) {
+          console.error('Failed to process voice response:', error);
+          // Fallback to original response
+          this.addMessage('bot', aiResponse, 'voice');
+        }
+      }
+
+      updateTranscript(delta, isFinal) {
+        // Update or create transcript message
+        let transcriptMsg = document.querySelector('.msg.transcript:last-child');
+        if (!transcriptMsg || isFinal) {
+          transcriptMsg = this.createMessageElement('user', delta, 'transcript');
+          this.messagesContainer.appendChild(transcriptMsg);
+        } else {
+          transcriptMsg.textContent += delta;
+        }
+        this.scrollToBottom();
+      }
+
+      disconnectVoice() {
+        if (this.pc) {
+          this.pc.close();
+          this.pc = null;
+        }
+        if (this.dataChannel) {
+          this.dataChannel.close();
+          this.dataChannel = null;
+        }
+        this.isVoiceConnected = false;
+        this.isVoiceActive = false;
+        this.voiceToggle.classList.remove('active', 'connecting');
+        this.voiceStatus.textContent = 'Voice Ready';
+      }
+
+      async sendMessage() {
+        const message = this.userInput.value.trim();
+        if (!message) return;
+
+        this.addMessage('user', message);
+        this.userInput.value = '';
+        this.showTyping(true);
+
+        try {
+          const response = await fetch('{{ chat_url }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_input: message,
+              history: this.chatHistory
+            })
+          });
+
+          const data = await response.json();
+          this.showTyping(false);
+
+          if (data.reply) {
+            this.addMessage('bot', data.reply);
+            this.chatHistory = data.history || [];
+            this.saveChatHistory();
+          }
+        } catch (error) {
+          this.showTyping(false);
+          this.addMessage('bot', 'Sorry, I encountered an error. Please try again.');
+          console.error('Chat error:', error);
+        }
+      }
+
+      addMessage(sender, content, type = null) {
+        const messageEl = this.createMessageElement(sender, content, type);
+        this.messagesContainer.appendChild(messageEl);
+        this.scrollToBottom();
+      }
+
+      createMessageElement(sender, content, type = null) {
+        const messageEl = document.createElement('div');
+        messageEl.className = `msg ${sender}`;
+        if (type) messageEl.classList.add(type);
+        
+        // Format content for bot messages
+        if (sender === 'bot' && !type) {
+          messageEl.innerHTML = this.formatBotMessage(content);
+        } else {
+          messageEl.textContent = content;
+        }
+        
+        return messageEl;
+      }
+
+      formatBotMessage(content) {
+        return content
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+          .replace(/^### (.*$)/gm, '<div class="header">$1</div>')
+          .replace(/^## (.*$)/gm, '<div class="header">$1</div>')
+          .replace(/^# (.*$)/gm, '<div class="header">$1</div>')
+          .replace(/\n/g, '<br>');
+      }
+
+      showTyping(show) {
+        this.typingIndicator.style.display = show ? 'block' : 'none';
+        if (show) this.scrollToBottom();
+      }
+
+      scrollToBottom() {
+        this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+      }
+
+      async clearChat() {
+        try {
+          await fetch('/clear_chat', { method: 'POST' });
+          this.messagesContainer.innerHTML = '';
+          this.chatHistory = [];
+          this.saveChatHistory();
+          this.addMessage('bot', 'Hello! I\'m your JewelryBox AI assistant. How can I help you today?');
+        } catch (error) {
+          console.error('Failed to clear chat:', error);
+        }
+      }
+
+      saveChatHistory() {
+        localStorage.setItem('jewelrybox-chat-history', JSON.stringify(this.chatHistory));
+      }
+
+      loadChatHistory() {
+        const saved = localStorage.getItem('jewelrybox-chat-history');
+        if (saved) {
+          this.chatHistory = JSON.parse(saved);
+          if (this.chatHistory.length === 0) {
+            this.addMessage('bot', 'Hello! I\'m your JewelryBox AI assistant. How can I help you today?');
+          } else {
+            this.chatHistory.forEach(msg => {
+              this.addMessage(msg.role === 'human' ? 'user' : 'bot', msg.content);
+            });
+          }
+        } else {
+          this.addMessage('bot', 'Hello! I\'m your JewelryBox AI assistant. How can I help you today?');
+        }
+      }
+    }
+
+    // Initialize the voice chat when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      new JewelryVoiceChat();
+    });
+  </script>
+</body>
+</html> 

@@ -192,18 +192,56 @@ prompt_template = ChatPromptTemplate.from_messages([
 ])
 chain = prompt_template | llm
 
+# ─── UNIFIED RESPONSE PROCESSOR ──────────────────────────────────────────────
+
+def process_ai_response(user_input: str, ai_response: str) -> str:
+    """
+    Unified processor for both text and voice responses to ensure consistency.
+    Applies URL injection and any other post-processing.
+    """
+    try:
+        # Apply memory manager URL injection
+        processed_response = memory_manager.inject_relevant_url(user_input, ai_response)
+        return processed_response
+    except Exception as e:
+        logger.error(f"Error processing AI response: {e}")
+        return ai_response  # Return original if processing fails
+
 # ─── REQUEST MODEL ────────────────────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
     user_input: str
     history: list
 
+class VoiceTranscriptRequest(BaseModel):
+    user_input: str
+    ai_response: str
+
 # ─── ROOT REDIRECT ───────────────────────────────────────────────────────────
 
 @app.get("/")
 async def root():
-    """Redirect root URL to the widget"""
-    return RedirectResponse(url="/widget")
+    """Redirect root URL to the voice widget"""
+    return RedirectResponse(url="/voice")
+
+# ─── MAIN ROUTES ──────────────────────────────────────────────────────────────
+
+@app.get("/voice", response_class=HTMLResponse)
+async def voice_chat(request: Request):
+    """Render the voice-enabled chat widget UI"""
+    # Force HTTPS for production deployments (Render.com, etc.)
+    scheme = "https" if "onrender.com" in str(request.url.netloc) or request.url.scheme == "https" else request.url.scheme
+    
+    return templates.TemplateResponse(
+        "voice_widget.html",
+        {
+            "request": request,
+            "chat_url": f"{scheme}://{request.url.netloc}/chat",
+            "voice_session_url": f"{scheme}://{request.url.netloc}/voice/session",
+            "voice_process_url": f"{scheme}://{request.url.netloc}/voice/process",
+            "img_uri": IMG_URI,
+        },
+    )
 
 # ─── CHAT ENDPOINT ───────────────────────────────────────────────────────────
 
@@ -216,7 +254,10 @@ async def chat(req: ChatRequest):
         history = req.history or []
         result = chain.invoke({"user_input": req.user_input, "history": history})
         reply = result.content.strip()
-        reply = memory_manager.inject_relevant_url(req.user_input, reply)
+        
+        # Use unified response processor
+        reply = process_ai_response(req.user_input, reply)
+        
         memory.add_user_message(req.user_input)
         memory.add_ai_message(reply)
         return JSONResponse({
@@ -228,6 +269,28 @@ async def chat(req: ChatRequest):
         return JSONResponse(
             status_code=500,
             content={"error": "An internal error occurred. Please try again later."}
+        )
+
+# ─── VOICE RESPONSE PROCESSOR ────────────────────────────────────────────────
+
+@app.post("/voice/process")
+async def process_voice_response(req: VoiceTranscriptRequest):
+    """
+    Process voice responses to ensure they match text output formatting.
+    This endpoint is called by the frontend after receiving voice responses.
+    """
+    try:
+        # Use the same processing pipeline as text chat
+        processed_response = process_ai_response(req.user_input, req.ai_response)
+        
+        return JSONResponse({
+            "processed_response": processed_response
+        })
+    except Exception as e:
+        logger.error(f"Error processing voice response: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to process voice response"}
         )
 
 # ─── CLEAR CHAT ENDPOINT ──────────────────────────────────────────────────────
@@ -246,6 +309,63 @@ async def clear_chat():
         return JSONResponse(
             status_code=500,
             content={"error": "Failed to clear chat history."}
+        )
+
+# ─── REALTIME VOICE ENDPOINTS ────────────────────────────────────────────────
+
+@app.post("/voice/session")
+async def create_voice_session():
+    """
+    Create an ephemeral token for OpenAI Realtime API.
+    This endpoint is called by the frontend to get a token for WebRTC connection.
+    """
+    try:
+        import requests
+        
+        # Create ephemeral session token using requests
+        response = requests.post(
+            "https://api.openai.com/v1/realtime/sessions",
+            json={
+                "model": "gpt-4o-realtime-preview-2024-12-17",
+                "voice": "ballad",
+                "instructions": system_prompt,  # Use the same system prompt as chat
+                "input_audio_format": "pcm16",
+                "output_audio_format": "pcm16",
+                "input_audio_transcription": {
+                    "model": "whisper-1"
+                },
+                "turn_detection": {
+                    "type": "server_vad",
+                    "threshold": 0.5,
+                    "prefix_padding_ms": 300,
+                    "silence_duration_ms": 500
+                },
+                "tools": [],  # Can add function calling later
+                "tool_choice": "auto",
+                "temperature": 0.8,
+                "max_response_output_tokens": 4096
+            },
+            headers={
+                "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
+                "Content-Type": "application/json"
+            }
+        )
+        
+        if response.status_code == 200:
+            session_data = response.json()
+            return JSONResponse(session_data)
+        else:
+            logger.error(f"Failed to create voice session: {response.text}")
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Failed to create voice session"}
+            )
+            
+    except Exception as e:
+        logger.error(f"Error creating voice session: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to create voice session"}
         )
 
 # ─── WIDGET ENDPOINT ─────────────────────────────────────────────────────────
