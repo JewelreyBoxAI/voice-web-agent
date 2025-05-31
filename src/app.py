@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # Load environment variables FIRST before any other imports
 load_dotenv()
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
@@ -237,7 +237,6 @@ async def voice_chat(request: Request):
         {
             "request": request,
             "chat_url": f"{scheme}://{request.url.netloc}/chat",
-            "voice_session_url": f"{scheme}://{request.url.netloc}/voice/session",
             "voice_process_url": f"{scheme}://{request.url.netloc}/voice/process",
             "img_uri": IMG_URI,
         },
@@ -311,61 +310,58 @@ async def clear_chat():
             content={"error": "Failed to clear chat history."}
         )
 
-# ─── REALTIME VOICE ENDPOINTS ────────────────────────────────────────────────
+# ─── ELEVENLABS TTS ENDPOINT ──────────────────────────────────────────────────
 
-@app.post("/voice/session")
-async def create_voice_session():
+@app.post("/voice/tts")
+async def generate_speech(request: Request):
     """
-    Create an ephemeral token for OpenAI Realtime API.
-    This endpoint is called by the frontend to get a token for WebRTC connection.
+    Generate speech using ElevenLabs TTS API.
+    This endpoint takes text and returns audio using the voice ID from environment variables.
     """
     try:
-        import requests
+        from elevenlabs.client import ElevenLabs
         
-        # Create ephemeral session token using requests
-        response = requests.post(
-            "https://api.openai.com/v1/realtime/sessions",
-            json={
-                "model": "gpt-4o-realtime-preview-2024-12-17",
-                "voice": "ballad",
-                "instructions": system_prompt,  # Use the same system prompt as chat
-                "input_audio_format": "pcm16",
-                "output_audio_format": "pcm16",
-                "input_audio_transcription": {
-                    "model": "whisper-1"
-                },
-                "turn_detection": {
-                    "type": "server_vad",
-                    "threshold": 0.5,
-                    "prefix_padding_ms": 300,
-                    "silence_duration_ms": 500
-                },
-                "tools": [],  # Can add function calling later
-                "tool_choice": "auto",
-                "temperature": 0.8,
-                "max_response_output_tokens": 4096
-            },
+        # Get the text from request body
+        body = await request.json()
+        text = body.get("text", "")
+        
+        if not text:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Text is required"}
+            )
+        
+        # Initialize ElevenLabs client
+        elevenlabs_client = ElevenLabs(api_key=os.getenv('ELEVENLABS_API_KEY'))
+        
+        # Get voice ID from environment variable, fallback to a default
+        voice_id = os.getenv('ELEVENLABS_VOICE_ID', 'JBFqnCBsd6RMkjVDRZzb')  # Rachel voice as fallback
+        
+        # Generate audio
+        audio = elevenlabs_client.text_to_speech.convert(
+            text=text,
+            voice_id=voice_id,
+            model_id="eleven_multilingual_v2",
+            output_format="mp3_44100_128",
+        )
+        
+        # Convert audio generator to bytes
+        audio_bytes = b"".join(audio)
+        
+        # Return audio as response
+        return Response(
+            content=audio_bytes,
+            media_type="audio/mpeg",
             headers={
-                "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
-                "Content-Type": "application/json"
+                "Content-Disposition": "attachment; filename=speech.mp3"
             }
         )
         
-        if response.status_code == 200:
-            session_data = response.json()
-            return JSONResponse(session_data)
-        else:
-            logger.error(f"Failed to create voice session: {response.text}")
-            return JSONResponse(
-                status_code=500,
-                content={"error": "Failed to create voice session"}
-            )
-            
     except Exception as e:
-        logger.error(f"Error creating voice session: {e}", exc_info=True)
+        logger.error(f"Error generating speech: {e}", exc_info=True)
         return JSONResponse(
             status_code=500,
-            content={"error": "Failed to create voice session"}
+            content={"error": "Failed to generate speech"}
         )
 
 # ─── WIDGET ENDPOINT ─────────────────────────────────────────────────────────
